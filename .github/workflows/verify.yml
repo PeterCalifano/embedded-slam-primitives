@@ -1,0 +1,42 @@
+name: C verification
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  host:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - run: sudo apt-get update && sudo apt-get install -y gcc clang cmake ninja-build
+      - run: bash scripts/verify.sh
+      - run: bash scripts/run_compiler_analysis.sh
+      - run: bash scripts/fuzz.sh 50000
+  static-and-memcheck:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - run: sudo apt-get update && sudo apt-get install -y gcc cmake ninja-build valgrind cppcheck
+      - run: bash scripts/run_cppcheck.sh
+      - run: bash scripts/run_valgrind.sh
+  profile:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - run: sudo apt-get update && sudo apt-get install -y gcc cmake ninja-build valgrind
+      - run: bash scripts/profile.sh
+      - run: cat profiles/*/environment.txt profiles/*/workload.txt profiles/*/size.txt profiles/*/callgrind.txt profiles/*/cachegrind.txt
+# Runner package versions are not frozen. Pin the complete toolchain image before
+# qualification. Licensed MISRA coverage is a separate manual release gate.

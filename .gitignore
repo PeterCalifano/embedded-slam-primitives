@@ -1,0 +1,11 @@
+/build*/
+/install*/
+/profiles/
+*.gcda
+*.gcno
+*.gcov
+*.su
+*.profraw
+*.profdata
+/compile_commands.json
+/.local/
